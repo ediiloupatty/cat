@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEURAL CAT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Permanent+Marker&family=Tourney:wght@800&display=swap');
+        
+        :root {
+            --primary-color: #1E3A8A;
+            --secondary-color: #CA3435;
+            --accent-color: #FF8C42;
+            --neon-color: #00ffff;
+            --purple-neon: #9d4edd;
+            --text-color: #ffffff;
+            --box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            overflow: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Neural Network Background */
+        #neural-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Cat Text Animation */
+        .cat-text-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+            mix-blend-mode: difference;
+        }
+
+        .cat-text {
+            font-family: 'Tourney', cursive;
+            font-size: 8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-color);
+            text-shadow: 
+                0 0 5px var(--neon-color),
+                0 0 10px var(--neon-color),
+                0 0 20px var(--neon-color),
+                0 0 40px var(--purple-neon);
+            position: relative;
+            letter-spacing: 3px;
+            perspective: 1000px;
+            transform-style: preserve-3d;
+        }
+
+        .cat-text .letter {
+            display: inline-block;
+            position: relative;
+            animation: glitchText 8s infinite alternate-reverse;
+        }
+
+        @keyframes glitchText {
+            0%, 100% { 
+                transform: rotateY(0deg) skewX(0deg);
+                text-shadow: 0 0 5px var(--neon-color), 0 0 10px var(--neon-color), 0 0 20px var(--neon-color);
+            }
+            25% { 
+                transform: rotateY(10deg) skewX(5deg);
+                text-shadow: -2px 0 5px var(--purple-neon), 2px 0 10px var(--neon-color);
+            }
+            35% { 
+                transform: rotateY(-10deg) skewX(-5deg);
+                text-shadow: 2px 0 5px #ff1493, -2px 0 10px var(--purple-neon);
+            }
+            50% { 
+                transform: rotateY(0deg) skewX(0deg);
+                text-shadow: 0 0 15px var(--neon-color), 0 0 25px var(--neon-color);
+            }
+            75% { 
+                transform: rotateY(-5deg) skewX(-2deg);
+                text-shadow: 1px 0 5px var(--neon-color), -1px 0 10px var(--purple-neon);
+            }
+        }
+
+        /* Neural particle effect */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.8;
+            z-index: 2;
+            filter: blur(2px);
+            box-shadow: 0 0 10px 2px currentColor;
+        }
+
+        /* Paw Icons in 3D Space */
+        .paw-particle {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            z-index: 3;
+            transform-style: preserve-3d;
+            opacity: 0.7;
+        }
+
+        /* Loading Animation */
+        .loading-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        .loader {
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+
+        .loader:before, .loader:after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--neon-color);
+            opacity: 0.6;
+            filter: blur(10px);
+            animation: neuralPulse 2s infinite ease-in-out;
+        }
+
+        .loader:after {
+            background: var(--purple-neon);
+            animation-delay: -1s;
+        }
+
+        @keyframes neuralPulse {
+            0%, 100% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1);
+                opacity: 0;
+            }
+        }
+
+        .fadeOut {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Glitch overlay */
+        .glitch-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            pointer-events: none;
+            z-index: 8;
+            opacity: 0.05;
+            mix-blend-mode: overlay;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500"><filter id="n" x="0" y="0"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="10" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0"/></filter><rect width="500" height="500" fill="white" filter="url(%23n)"/></svg>');
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .cat-text {
+                font-size: 5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cat-text {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-container">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Neural Network Background -->
+    <canvas id="neural-bg"></canvas>
+
+    <!-- Glitch Overlay -->
+    <div class="glitch-overlay"></div>
+
+    <!-- Cat Text Main Feature -->
+    <div class="cat-text-container">
+        <h1 class="cat-text" id="catText">KONG</h1>
+    </div>
+
+    <script>
+        // Loading Screen
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.querySelector('.loading-container').classList.add('fadeOut');
+                startNeuralAnimation();
+                createTextEffect();
+            }, 1500);
+        });
+
+        // Neural Network Animation
+        function startNeuralAnimation() {
+            const canvas = document.getElementById('neural-bg');
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 20;
+
+            // Nodes
+            const nodes = [];
+            const nodeCount = 150;
+            const nodeGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+            
+            // Create nodes with different colors
+            const colors = [0x00ffff, 0x9d4edd, 0xff1493];
+            
+            for (let i = 0; i < nodeCount; i++) {
+                const colorIndex = Math.floor(Math.random() * colors.length);
+                const nodeMaterial = new THREE.MeshBasicMaterial({ 
+                    color: colors[colorIndex],
+                    transparent: true,
+                    opacity: 0.7
+                });
+                
+                const node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+                
+                // Random position within a sphere
+                const radius = 15;
+                const theta = 2 * Math.PI * Math.random();
+                const phi = Math.acos(2 * Math.random() - 1);
+                
+                node.position.x = radius * Math.sin(phi) * Math.cos(theta);
+                node.position.y = radius * Math.sin(phi) * Math.sin(theta);
+                node.position.z = radius * Math.cos(phi);
+                
+                scene.add(node);
+                nodes.push({
+                    mesh: node,
+                    speed: 0.002 + Math.random() * 0.003,
+                    rotAxis: new THREE.Vector3(
+                        Math.random() - 0.5,
+                        Math.random() - 0.5,
+                        Math.random() - 0.5
+                    ).normalize()
+                });
+            }
+
+            // Connections (lines between nodes)
+            const connectionsMaterial = new THREE.LineBasicMaterial({ 
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.2
+            });
+            
+            const connections = [];
+            const maxDistance = 5; // Maximum distance for nodes to be connected
+            
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const distance = nodes[i].mesh.position.distanceTo(nodes[j].mesh.position);
+                    
+                    if (distance < maxDistance) {
+                        const geometry = new THREE.BufferGeometry().setFromPoints([
+                            nodes[i].mesh.position,
+                            nodes[j].mesh.position
+                        ]);
+                        
+                        const line = new THREE.Line(geometry, connectionsMaterial);
+                        scene.add(line);
+                        
+                        connections.push({
+                            line: line,
+                            point1: i,
+                            point2: j
+                        });
+                    }
+                }
+            }
+
+            // Animation
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Rotate the whole scene
+                scene.rotation.y += 0.002;
+                scene.rotation.x += 0.001;
+                
+                // Update node positions
+                nodes.forEach(node => {
+                    const rotationMatrix = new THREE.Matrix4().makeRotationAxis(
+                        node.rotAxis, 
+                        node.speed
+                    );
+                    node.mesh.position.applyMatrix4(rotationMatrix);
+                });
+                
+                // Update connection lines
+                connections.forEach(conn => {
+                    conn.line.geometry.setFromPoints([
+                        nodes[conn.point1].mesh.position,
+                        nodes[conn.point2].mesh.position
+                    ]);
+                    conn.line.geometry.attributes.position.needsUpdate = true;
+                });
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+            // Create paw particles in 3D space
+            const pawContainer = document.body;
+            const pawIcons = ['🐾', '🐱', '🐈', '😻'];
+            
+            function createPawParticle() {
+                const paw = document.createElement('div');
+                paw.classList.add('paw-particle');
+                paw.innerText = pawIcons[Math.floor(Math.random() * pawIcons.length)];
+                
+                // Random position in 3D space
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                const z = Math.random() * 500 - 250; // Z depth
+                
+                // Set styles
+                paw.style.left = `${x}px`;
+                paw.style.top = `${y}px`;
+                paw.style.transform = `translateZ(${z}px)`;
+                
+                pawContainer.appendChild(paw);
+                
+                // Animate with GSAP
+                gsap.to(paw, {
+                    x: Math.random() * 200 - 100,
+                    y: Math.random() * 200 - 100,
+                    z: Math.random() * 300 - 150,
+                    rotationX: Math.random() * 360,
+                    rotationY: Math.random() * 360,
+                    rotationZ: Math.random() * 360,
+                    opacity: 0,
+                    duration: 8 + Math.random() * 10,
+                    ease: "power1.inOut",
+                    onComplete: () => {
+                        paw.remove();
+                    }
+                });
+            }
+            
+            // Create initial paws
+            for (let i = 0; i < 15; i++) {
+                createPawParticle();
+            }
+            
+            // Continue creating paws
+            setInterval(createPawParticle, 1500);
+        }
+
+        // Text effect with individual letter animations
+        function createTextEffect() {
+            const catText = document.getElementById('catText');
+            const text = catText.innerText;
+            catText.innerHTML = '';
+            
+            // Create spans for each letter
+            for (let i = 0; i < text.length; i++) {
+                const letter = document.createElement('span');
+                letter.classList.add('letter');
+                letter.textContent = text[i];
+                letter.style.animationDelay = `${0.1 * i}s`;
+                catText.appendChild(letter);
+            }
+            
+            // Apply GSAP animation to text
+            gsap.fromTo('.letter', 
+                { opacity: 0, y: -100, rotationX: -90 },
+                { 
+                    opacity: 1, 
+                    y: 0,
+                    rotationX: 0,
+                    stagger: 0.1,
+                    duration: 1.5,
+                    ease: "elastic.out(1, 0.5)"
+                }
+            );
+            
+            // Add 3D effect to text on mouse move
+            document.addEventListener('mousemove', (e) => {
+                const x = (window.innerWidth / 2 - e.pageX) / 20;
+                const y = (window.innerHeight / 2 - e.pageY) / 20;
+                
+                gsap.to(catText, {
+                    rotationY: x,
+                    rotationX: y,
+                    duration: 0.5,
+                    ease: "power1.out"
+                });
+            });
+            
+            // Add periodic glitch effect
+            setInterval(() => {
+                const randomLetter = Math.floor(Math.random() * text.length);
+                const letterElement = catText.children[randomLetter];
+                
+                if (letterElement) {
+                    gsap.to(letterElement, {
+                        skewX: "25deg",
+                        duration: 0.1,
+                        color: "#ff1493",
+                        textShadow: "0 0 10px #ff1493, 0 0 20px #ff1493",
+                        onComplete: () => {
+                            gsap.to(letterElement, {
+                                skewX: "0deg",
+                                duration: 0.1,
+                                color: "#ffffff",
+                                textShadow: "0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 40px #9d4edd"
+                            });
+                        }
+                    });
+                }
+            }, 2000);
+        }
+
+        // Create neural particles floating around
+        function createNeuralParticles() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    
+                    // Random size, color and position
+                    const size = Math.random() * 5 + 2;
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    const colors = ['#00ffff', '#9d4edd', '#ff1493'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.left = `${x}px`;
+                    particle.style.top = `${y}px`;
+                    particle.style.color = color;
+                    
+                    document.body.appendChild(particle);
+                    
+                    // Animate with GSAP
+                    gsap.to(particle, {
+                        x: Math.random() * 200 - 100,
+                        y: Math.random() * 200 - 100,
+                        opacity: 0,
+                        duration: 3 + Math.random() * 7,
+                        ease: "power1.out",
+                        onComplete: () => {
+                            particle.remove();
+                            createNeuralParticles(); // Create new particle when this one is done
+                        }
+                    });
+                }, i * 200);
+            }
+        }
+
+        // Start creating particles after page load
+        window.addEventListener('load', () => {
+            setTimeout(createNeuralParticles, 2000);
+        });
+    </script>
+</body>
+</html>
